@@ -1,7 +1,7 @@
 name: Update IP Lists
 on:
   schedule:
-    - cron: '0 20 * * *' # 北京时间凌晨 4:00 运行
+    - cron: '0 20 * * *' # UTC 20:00 (北京时间次日 04:00)
   workflow_dispatch:      # 允许手动触发
 
 jobs:
@@ -16,89 +16,304 @@ jobs:
         run: |
           set -euo pipefail
           
-          # 1. 下载原始数据
-          curl -s -o bgp-ipv4.list "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china.txt"
-          curl -s -o bgp-ipv6.list "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china6.txt"
-          curl -s "https://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest" > apnic.txt
+          # ============================================
+          # 辅助函数
+          # ============================================
           
-          # 解析 APNIC 数据
+          log_info() {
+            echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $1"
+          }
+          
+          log_error() {
+            echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') - $1" >&2
+          }
+          
+          download_file() {
+            local url="$1"
+            local output="$2"
+            log_info "Downloading $output from $url"
+            
+            if ! curl -fsSL --retry 3 --retry-delay 5 -o "$output" "$url"; then
+              log_error "Failed to download $output"
+              return 1
+            fi
+            
+            if [ ! -s "$output" ]; then
+              log_error "$output is empty"
+              return 1
+            fi
+            
+            log_info "Successfully downloaded $output ($(wc -l < "$output") lines)"
+            return 0
+          }
+          
+          validate_ip_file() {
+            local file="$1"
+            if [ ! -s "$file" ]; then
+              log_error "$file is empty or does not exist"
+              return 1
+            fi
+            
+            # 验证文件至少包含有效的 IP 格式
+            if ! grep -qE '^[0-9a-f:.\/]+$' "$file"; then
+              log_error "$file does not contain valid IP addresses"
+              return 1
+            fi
+            
+            return 0
+          }
+          
+          # ============================================
+          # 1. 下载原始数据
+          # ============================================
+          
+          log_info "Step 1: Downloading source data"
+          
+          download_file "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china.txt" "bgp-ipv4.list"
+          download_file "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china6.txt" "bgp-ipv6.list"
+          download_file "https://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest" "apnic.txt"
+          
+          # ============================================
+          # 2. 解析 APNIC 数据
+          # ============================================
+          
+          log_info "Step 2: Parsing APNIC data"
+          
+          if ! grep -q "CN|ipv4" apnic.txt; then
+            log_error "No CN IPv4 data found in APNIC file"
+            exit 1
+          fi
+          
           cat apnic.txt | grep ipv4 | grep CN | awk -F\| '{ printf("%s/%d\n", $4, 32-log($5)/log(2)) }' > apnic-ipv4.list
           cat apnic.txt | grep "|CN|ipv6|" | cut -d"|" -f"4,5" | tr "|" "/" > apnic-ipv6.list
           
-          # 2. 下载并运行 cidr-merger (去重与合并)
-          CIDR_URL=$(curl -s https://api.github.com/repos/zhanhb/cidr-merger/releases/latest | grep "browser_download_url" | grep "linux.*amd64" | head -1 | cut -d '"' -f 4)
+          validate_ip_file "apnic-ipv4.list"
+          validate_ip_file "apnic-ipv6.list"
+          
+          # ============================================
+          # 3. 下载并运行 cidr-merger (去重与合并)
+          # ============================================
+          
+          log_info "Step 3: Merging CIDR blocks"
+          
+          CIDR_URL=$(curl -fsSL https://api.github.com/repos/zhanhb/cidr-merger/releases/latest | \
+            grep -oP '"browser_download_url":\s*"\K[^"]*linux[^"]*amd64[^"]*' | head -1)
+          
           if [ -z "$CIDR_URL" ]; then
-            echo "Error: Failed to get CIDR merger URL"
+            log_error "Failed to get CIDR merger download URL"
             exit 1
           fi
-          wget -O cidr-merger "$CIDR_URL" && chmod +x cidr-merger
           
-          cat *ipv4.list | ./cidr-merger -s > ipv4.txt
-          cat *ipv6.list | ./cidr-merger -s > ipv6.txt
-          cat ipv4.txt ipv6.txt > ip.txt
-
-          # 3. 生成 Sing-box JSON (Source 格式)
-          if [ -s ip.txt ]; then
-            echo "{\"version\": 1, \"rules\": [{\"ip_cidr\": [$(sed 's/.*/"&"/' ip.txt | paste -sd, -)]}]}" > ip.json
+          # 验证 URL 格式
+          if ! echo "$CIDR_URL" | grep -qE '^https://github\.com/.*\.tar\.gz$|^https://github\.com/.*cidr-merger.*$'; then
+            log_error "Invalid CIDR merger URL format: $CIDR_URL"
+            exit 1
           fi
-
-          # 4. 生成 RouterOS RSC 脚本 (包含内网白名单)
+          
+          log_info "CIDR merger URL: $CIDR_URL"
+          
+          if ! wget -q --timeout=30 -O cidr-merger "$CIDR_URL"; then
+            log_error "Failed to download cidr-merger"
+            exit 1
+          fi
+          
+          if [ ! -s cidr-merger ]; then
+            log_error "Downloaded cidr-merger is empty"
+            exit 1
+          fi
+          
+          chmod +x cidr-merger
+          
+          # 合并 IPv4 和 IPv6
+          cat bgp-ipv4.list apnic-ipv4.list | ./cidr-merger -s > ipv4.txt
+          cat bgp-ipv6.list apnic-ipv6.list | ./cidr-merger -s > ipv6.txt
+          
+          validate_ip_file "ipv4.txt"
+          validate_ip_file "ipv6.txt"
+          
+          cat ipv4.txt ipv6.txt > ip.txt
+          
+          log_info "IPv4 entries: $(wc -l < ipv4.txt)"
+          log_info "IPv6 entries: $(wc -l < ipv6.txt)"
+          log_info "Total entries: $(wc -l < ip.txt)"
+          
+          # ============================================
+          # 4. 生成 Sing-box JSON (Source 格式)
+          # ============================================
+          
+          log_info "Step 4: Generating Sing-box JSON"
+          
+          if command -v jq &> /dev/null; then
+            # 使用 jq 生成标准 JSON
+            jq -n --rawfile ips ip.txt \
+              '{version: 1, rules: [{ip_cidr: ($ips | split("\n") | map(select(length > 0)))}]}' \
+              > ip.json
+          else
+            # 备用方案：使用 sed
+            if [ -s ip.txt ]; then
+              echo "{\"version\": 1, \"rules\": [{\"ip_cidr\": [$(sed 's/.*/"&"/' ip.txt | paste -sd, -)]}]}" > ip.json
+            else
+              log_error "ip.txt is empty, cannot generate JSON"
+              exit 1
+            fi
+          fi
+          
+          # 验证 JSON 格式
+          if command -v jq &> /dev/null; then
+            if ! jq empty ip.json 2>/dev/null; then
+              log_error "Generated ip.json is invalid"
+              exit 1
+            fi
+          fi
+          
+          log_info "Generated ip.json ($(wc -c < ip.json) bytes)"
+          
+          # ============================================
+          # 5. 生成 RouterOS RSC 脚本 (包含内网白名单)
+          # ============================================
+          
+          log_info "Step 5: Generating RouterOS RSC script"
+          
           {
+            echo "# Generated at $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
+            echo "# Total IPv4: $(wc -l < ipv4.txt), IPv6: $(wc -l < ipv6.txt)"
+            echo ""
             echo "/ip firewall address-list remove [find list=chnroute]"
             echo "/ipv6 firewall address-list remove [find list=chnroute]"
-            
+            echo ""
             echo "/ip firewall address-list"
             echo "add list=chnroute address=10.0.0.0/8 comment=Private-LAN"
             echo "add list=chnroute address=172.16.0.0/12 comment=Private-LAN"
             echo "add list=chnroute address=192.168.0.0/16 comment=Private-LAN"
             echo "add list=chnroute address=127.0.0.0/8 comment=Loopback"
+            
             if [ -s ipv4.txt ]; then
               awk '{print "add list=chnroute address=" $1}' ipv4.txt
             fi
             
+            echo ""
             echo "/ipv6 firewall address-list"
             echo "add list=chnroute address=::1/128 comment=Loopback"
             echo "add list=chnroute address=fe80::/10 comment=Link-Local"
             echo "add list=chnroute address=fc00::/7 comment=Unique-Local"
+            
             if [ -s ipv6.txt ]; then
               awk '{print "add list=chnroute address=" $1}' ipv6.txt
             fi
           } > ip.rsc
-
-          # 5. 生成分流工具格式 (Surge/Clash)
+          
+          log_info "Generated ip.rsc ($(wc -l < ip.rsc) lines)"
+          
+          # ============================================
+          # 6. 生成分流工具格式 (Surge/Clash)
+          # ============================================
+          
+          log_info "Step 6: Generating proxy tool configs"
+          
           for i in ipv4 ipv6 ip; do
             if [ -s "$i.txt" ]; then
               # 生成 .conf (Surge/Shadowrocket)
               sed "s|^|IP-CIDR,|g" "$i.txt" > "$i.conf"
+              
               # 生成 .yaml (Clash)
-              echo "payload:" > "$i.yaml"
-              sed "s|^|  - '&|g; s|$|&'|g" "$i.txt" >> "$i.yaml"
+              {
+                echo "# Generated at $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
+                echo "payload:"
+                sed "s|^|  - '|g; s|$|'|g" "$i.txt"
+              } > "$i.yaml"
+              
+              log_info "Generated $i.conf and $i.yaml"
             fi
           done
-
-          # 6. 生成 MMDB 数据库
-          MMDB_URL=$(curl -s https://api.github.com/repos/carrnot/mmdb-go/releases/latest | grep "browser_download_url" | grep "linux64.tar.gz" | head -1 | cut -d '"' -f 4)
+          
+          # ============================================
+          # 7. 生成 MMDB 数据库
+          # ============================================
+          
+          log_info "Step 7: Generating MMDB databases"
+          
+          MMDB_URL=$(curl -fsSL https://api.github.com/repos/carrnot/mmdb-go/releases/latest | \
+            grep -oP '"browser_download_url":\s*"\K[^"]*linux64\.tar\.gz[^"]*' | head -1)
+          
           if [ -n "$MMDB_URL" ]; then
-            wget -O mmdb-go.tar.gz "$MMDB_URL"
-            tar -xvf mmdb-go.tar.gz
-            MMDB_BIN=$(find . -maxdepth 1 -type f \( -name "*mmdb*" -o -name "mmdb-go" \) ! -name "*.tar.gz" ! -name "*.mmdb" | head -1)
-            if [ -n "$MMDB_BIN" ]; then
-              chmod +x "$MMDB_BIN"
-              [ -s ipv4.txt ] && "$MMDB_BIN" -i ipv4.txt -o ipv4.mmdb || true
-              [ -s ipv6.txt ] && "$MMDB_BIN" -i ipv6.txt -o ipv6.mmdb || true
-              [ -s ip.txt ] && "$MMDB_BIN" -i ip.txt -o ip.mmdb || true
-              rm -f "$MMDB_BIN"
+            log_info "MMDB URL: $MMDB_URL"
+            
+            if wget -q --timeout=30 -O mmdb-go.tar.gz "$MMDB_URL"; then
+              tar -xzf mmdb-go.tar.gz
+              
+              # 查找可执行文件（更精确的匹配）
+              MMDB_BIN=$(find . -maxdepth 1 -type f -executable \( -name "mmdb-go*" -o -name "*mmdb*" \) ! -name "*.tar.gz" ! -name "*.mmdb" | head -1)
+              
+              if [ -n "$MMDB_BIN" ] && [ -x "$MMDB_BIN" ]; then
+                log_info "Found MMDB binary: $MMDB_BIN"
+                
+                [ -s ipv4.txt ] && "$MMDB_BIN" -i ipv4.txt -o ipv4.mmdb && log_info "Generated ipv4.mmdb"
+                [ -s ipv6.txt ] && "$MMDB_BIN" -i ipv6.txt -o ipv6.mmdb && log_info "Generated ipv6.mmdb"
+                [ -s ip.txt ] && "$MMDB_BIN" -i ip.txt -o ip.mmdb && log_info "Generated ip.mmdb"
+                
+                rm -f "$MMDB_BIN"
+              else
+                log_error "MMDB binary not found or not executable"
+              fi
+              
+              rm -f mmdb-go.tar.gz
+            else
+              log_error "Failed to download MMDB tool, skipping MMDB generation"
             fi
-            rm -f mmdb-go.tar.gz
+          else
+            log_error "Failed to get MMDB download URL, skipping MMDB generation"
           fi
-
-          # 清理临时文件
-          rm -f *.list cidr-merger apnic.txt
+          
+          # ============================================
+          # 8. 清理临时文件
+          # ============================================
+          
+          log_info "Step 8: Cleaning up temporary files"
+          
+          rm -f bgp-ipv4.list bgp-ipv6.list apnic-ipv4.list apnic-ipv6.list
+          rm -f cidr-merger apnic.txt mmdb-go.tar.gz
+          
+          # 清理可能的解压残留
+          find . -maxdepth 1 -type f \( -name "mmdb-go*" -o -name "*mmdb*" \) ! -name "*.mmdb" -delete 2>/dev/null || true
+          
+          # ============================================
+          # 9. 生成摘要信息
+          # ============================================
+          
+          log_info "Step 9: Generating summary"
+          
+          {
+            echo "# IP Lists Update Summary"
+            echo ""
+            echo "**Generated at:** $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
+            echo ""
+            echo "## Statistics"
+            echo ""
+            echo "| Type | Count | Size |"
+            echo "|------|-------|------|"
+            [ -f ipv4.txt ] && echo "| IPv4 | $(wc -l < ipv4.txt) | $(wc -c < ipv4.txt) bytes |"
+            [ -f ipv6.txt ] && echo "| IPv6 | $(wc -l < ipv6.txt) | $(wc -c < ipv6.txt) bytes |"
+            [ -f ip.txt ] && echo "| Total | $(wc -l < ip.txt) | $(wc -c < ip.txt) bytes |"
+            echo ""
+            echo "## Generated Files"
+            echo ""
+            ls -lh *.txt *.json *.rsc *.conf *.yaml *.mmdb 2>/dev/null | awk '{print "- " $9 " (" $5 ")"}'
+          } > SUMMARY.md
+          
+          cat SUMMARY.md
+          
+          log_info "All steps completed successfully!"
 
       - name: Push to GitHub
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff-index --quiet HEAD || git commit -m "Update IP lists: $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
-          git push
+          git add -A
+          
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "🤖 Update IP lists: $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
+            git push
+            echo "Changes pushed successfully"
+          fi
