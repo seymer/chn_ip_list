@@ -42,22 +42,30 @@ jobs:
             echo "{\"version\": 1, \"rules\": [{\"ip_cidr\": [$(sed 's/.*/"&"/' ip.txt | paste -sd, -)]}]}" > ip.json
           fi
 
-          # 4. 生成 RouterOS RSC 脚本 (适配 RB5009)
-          echo "/ip firewall address-list remove [find list=chnroute]" > ip.rsc
-          echo "/ipv6 firewall address-list remove [find list=chnroute]" >> ip.rsc
-          
-          if [ -s ipv4.txt ]; then
-            echo "/ip firewall address-list" >> ip.rsc
-            awk '{print "add list=chnroute address=" $1}' ipv4.txt >> ip.rsc
-          fi
-          
-          if [ -s ipv6.txt ]; then
-            echo "/ipv6 firewall address-list" >> ip.rsc
-            awk '{print "add list=chnroute address=" $1}' ipv6.txt >> ip.rsc
-          fi
+          # 4. 生成 RouterOS RSC 脚本 (包含内网白名单)
+          {
+            echo "/ip firewall address-list remove [find list=chnroute]"
+            echo "/ipv6 firewall address-list remove [find list=chnroute]"
+            
+            echo "/ip firewall address-list"
+            echo "add list=chnroute address=10.0.0.0/8 comment=Private-LAN"
+            echo "add list=chnroute address=172.16.0.0/12 comment=Private-LAN"
+            echo "add list=chnroute address=192.168.0.0/16 comment=Private-LAN"
+            echo "add list=chnroute address=127.0.0.0/8 comment=Loopback"
+            if [ -s ipv4.txt ]; then
+              awk '{print "add list=chnroute address=" $1}' ipv4.txt
+            fi
+            
+            echo "/ipv6 firewall address-list"
+            echo "add list=chnroute address=::1/128 comment=Loopback"
+            echo "add list=chnroute address=fe80::/10 comment=Link-Local"
+            echo "add list=chnroute address=fc00::/7 comment=Unique-Local"
+            if [ -s ipv6.txt ]; then
+              awk '{print "add list=chnroute address=" $1}' ipv6.txt
+            fi
+          } > ip.rsc
 
           # 5. 生成分流工具格式 (Surge/Clash)
-          # 注意：不使用 sed -i 修改 txt 原件，确保 mmdb 工具读取正确
           for i in ipv4 ipv6 ip; do
             if [ -s "$i.txt" ]; then
               # 生成 .conf (Surge/Shadowrocket)
@@ -74,9 +82,7 @@ jobs:
             wget -O mmdb-go.tar.gz "$MMDB_URL"
             tar -xvf mmdb-go.tar.gz
             MMDB_BIN=$(find . -maxdepth 1 -type f \( -name "*mmdb*" -o -name "mmdb-go" \) ! -name "*.tar.gz" ! -name "*.mmdb" | head -1)
-            if [ -z "$MMDB_BIN" ] || [ ! -f "$MMDB_BIN" ]; then
-              echo "Warning: MMDB binary not found, skipping MMDB generation"
-            else
+            if [ -n "$MMDB_BIN" ]; then
               chmod +x "$MMDB_BIN"
               [ -s ipv4.txt ] && "$MMDB_BIN" -i ipv4.txt -o ipv4.mmdb || true
               [ -s ipv6.txt ] && "$MMDB_BIN" -i ipv6.txt -o ipv6.mmdb || true
@@ -94,6 +100,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          # 如果没有变化则不提交
           git diff-index --quiet HEAD || git commit -m "Update IP lists: $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
           git push
