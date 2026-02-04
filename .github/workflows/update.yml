@@ -131,8 +131,8 @@ jobs:
             exit 1
           fi
           
-          # 验证 URL 格式
-          if ! echo "$CIDR_URL" | grep -qE '^https://.*github.*\.(tar\.gz|gz|zip)$|^https://.*github.*cidr-merger'; then
+          # 验证 URL 格式（允许直接下载二进制文件或压缩包）
+          if ! echo "$CIDR_URL" | grep -qE '^https://.*github.*/(cidr-merger|releases/download)'; then
             log_error "Invalid CIDR merger URL format: $CIDR_URL"
             exit 1
           fi
@@ -140,7 +140,7 @@ jobs:
           log_info "CIDR merger URL: $CIDR_URL"
           
           # 下载 cidr-merger（带重试）
-          local retry=0
+          retry=0
           while [ $retry -lt 3 ]; do
             if wget -q --timeout=30 --tries=1 -O cidr-merger "$CIDR_URL" 2>/dev/null; then
               if [ -s cidr-merger ]; then
