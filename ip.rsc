@@ -1,4 +1,4 @@
-# Generated at 2026-02-04 15:19:02 UTC
+# Generated at 2026-02-04 20:36:15 UTC
 # Full RouterOS script (IPv4 + IPv6) for chnroute list
 # Total IPv4: 5828, IPv6: 2475
 
