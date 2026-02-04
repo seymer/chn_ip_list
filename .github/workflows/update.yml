@@ -1,8 +1,8 @@
 name: Update IP Lists
 on:
   schedule:
-    - cron: '0 20 * * *' # 每天凌晨4点运行(北京时间)
-  workflow_dispatch:
+    - cron: '0 20 * * *' # 北京时间凌晨 4:00 运行
+  workflow_dispatch:      # 允许手动触发
 
 jobs:
   build:
@@ -15,96 +15,85 @@ jobs:
       - name: Process IP Lists
         run: |
           set -euo pipefail
+          
           # 1. 下载原始数据
           curl -s -o bgp-ipv4.list "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china.txt"
           curl -s -o bgp-ipv6.list "https://raw.githubusercontent.com/gaoyifan/china-operator-ip/ip-lists/china6.txt"
           curl -s "https://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest" > apnic.txt
+          
+          # 解析 APNIC 数据
           cat apnic.txt | grep ipv4 | grep CN | awk -F\| '{ printf("%s/%d\n", $4, 32-log($5)/log(2)) }' > apnic-ipv4.list
           cat apnic.txt | grep "|CN|ipv6|" | cut -d"|" -f"4,5" | tr "|" "/" > apnic-ipv6.list
           
-          # 2. 合并并去重
+          # 2. 下载并运行 cidr-merger (去重与合并)
           CIDR_URL=$(curl -s https://api.github.com/repos/zhanhb/cidr-merger/releases/latest | grep "browser_download_url" | grep "linux.*amd64" | head -1 | cut -d '"' -f 4)
           if [ -z "$CIDR_URL" ]; then
             echo "Error: Failed to get CIDR merger URL"
             exit 1
           fi
           wget -O cidr-merger "$CIDR_URL" && chmod +x cidr-merger
-          if [ -n "$(ls *ipv4.list 2>/dev/null)" ]; then
-            cat *ipv4.list | ./cidr-merger -s > ipv4.txt
-          else
-            touch ipv4.txt
-          fi
-          if [ -n "$(ls *ipv6.list 2>/dev/null)" ]; then
-            cat *ipv6.list | ./cidr-merger -s > ipv6.txt
-          else
-            touch ipv6.txt
-          fi
+          
+          cat *ipv4.list | ./cidr-merger -s > ipv4.txt
+          cat *ipv6.list | ./cidr-merger -s > ipv6.txt
           cat ipv4.txt ipv6.txt > ip.txt
 
           # 3. 生成 Sing-box JSON (Source 格式)
-          echo "{\"version\": 1, \"rules\": [{\"ip_cidr\": [$(sed 's/.*/"&"/' ip.txt | paste -sd, -)]}]}" > ip.json
+          if [ -s ip.txt ]; then
+            echo "{\"version\": 1, \"rules\": [{\"ip_cidr\": [$(sed 's/.*/"&"/' ip.txt | paste -sd, -)]}]}" > ip.json
+          fi
 
-          # 4. 生成 RouterOS RSC 脚本
-          # 我们把 v4 和 v6 放在一个文件里，分别处理路径
+          # 4. 生成 RouterOS RSC 脚本 (适配 RB5009)
           echo "/ip firewall address-list remove [find list=chnroute]" > ip.rsc
           echo "/ipv6 firewall address-list remove [find list=chnroute]" >> ip.rsc
-          echo "/ip firewall address-list" >> ip.rsc
-          awk '{print "add list=chnroute address="$1}' ipv4.txt >> ip.rsc
-          echo "/ipv6 firewall address-list" >> ip.rsc
-          awk '{print "add list=chnroute address="$1}' ipv6.txt >> ip.rsc
+          
+          if [ -s ipv4.txt ]; then
+            echo "/ip firewall address-list" >> ip.rsc
+            awk '{print "add list=chnroute address=" $1}' ipv4.txt >> ip.rsc
+          fi
+          
+          if [ -s ipv6.txt ]; then
+            echo "/ipv6 firewall address-list" >> ip.rsc
+            awk '{print "add list=chnroute address=" $1}' ipv6.txt >> ip.rsc
+          fi
 
-          # 5. 生成原有格式 (conf/yaml)
-          for i in ipv4.txt ipv6.txt ip.txt; do
-            if [ -f "$i" ]; then
-              cp "$i" "${i%.txt}.conf"
-              cp "$i" "${i%.txt}.yaml"
+          # 5. 生成分流工具格式 (Surge/Clash)
+          # 注意：不使用 sed -i 修改 txt 原件，确保 mmdb 工具读取正确
+          for i in ipv4 ipv6 ip; do
+            if [ -s "$i.txt" ]; then
+              # 生成 .conf (Surge/Shadowrocket)
+              sed "s|^|IP-CIDR,|g" "$i.txt" > "$i.conf"
+              # 生成 .yaml (Clash)
+              echo "payload:" > "$i.yaml"
+              sed "s|^|  - '&|g; s|$|&'|g" "$i.txt" >> "$i.yaml"
             fi
           done
 
-          if [ -n "$(ls *.conf 2>/dev/null)" ]; then
-            sed -i "s|^|IP-CIDR,|g" *.conf
-          fi
-          # 注意：ip.txt 重新生成以覆盖带 IP-CIDR 前缀的版本
-          cat ipv4.txt ipv6.txt > ip.txt
-          
-          # 生成 YAML 格式 (Clash/OpenClash 常用)
-          for f in ipv4.yaml ipv6.yaml; do
-            if [ -f "$f" ]; then
-              sed -i -e "s|^|  - '&|g" -e "s|$|&'|g" "$f"
-              sed -i "1s|^|payload:\n|" "$f"
-            fi
-          done
-          if [ -f ipv4.yaml ] && [ -f ipv6.yaml ]; then
-            cat ipv4.yaml ipv6.yaml > ip.yaml
-          elif [ -f ipv4.yaml ]; then
-            cp ipv4.yaml ip.yaml
-          elif [ -f ipv6.yaml ]; then
-            cp ipv6.yaml ip.yaml
-          fi
-          
-          # 生成 MMDB 数据库
+          # 6. 生成 MMDB 数据库
           MMDB_URL=$(curl -s https://api.github.com/repos/carrnot/mmdb-go/releases/latest | grep "browser_download_url" | grep "linux64.tar.gz" | head -1 | cut -d '"' -f 4)
-          if [ -z "$MMDB_URL" ]; then
-            echo "Warning: Failed to get MMDB tool URL, skipping MMDB generation"
-          else
+          if [ -n "$MMDB_URL" ]; then
             wget -O mmdb-go.tar.gz "$MMDB_URL"
-            tar -xvf mmdb-go.tar.gz && rm mmdb-go.tar.gz
-            # 查找解压出来的二进制文件（可能是 mmdb-go 或其他名称）
+            tar -xvf mmdb-go.tar.gz
             MMDB_BIN=$(find . -maxdepth 1 -type f \( -name "*mmdb*" -o -name "mmdb-go" \) ! -name "*.tar.gz" ! -name "*.mmdb" | head -1)
             if [ -z "$MMDB_BIN" ] || [ ! -f "$MMDB_BIN" ]; then
-              MMDB_BIN="./mmdb-go"
+              echo "Warning: MMDB binary not found, skipping MMDB generation"
+            else
+              chmod +x "$MMDB_BIN"
+              [ -s ipv4.txt ] && "$MMDB_BIN" -i ipv4.txt -o ipv4.mmdb || true
+              [ -s ipv6.txt ] && "$MMDB_BIN" -i ipv6.txt -o ipv6.mmdb || true
+              [ -s ip.txt ] && "$MMDB_BIN" -i ip.txt -o ip.mmdb || true
+              rm -f "$MMDB_BIN"
             fi
-            chmod +x "$MMDB_BIN"
-            [ -f ipv4.txt ] && "$MMDB_BIN" -i ipv4.txt -o ipv4.mmdb || true
-            [ -f ipv6.txt ] && "$MMDB_BIN" -i ipv6.txt -o ipv6.mmdb || true
-            [ -f ip.txt ] && "$MMDB_BIN" -i ip.txt -o ip.mmdb || true
-            rm -f "$MMDB_BIN" mmdb-go.tar.gz
+            rm -f mmdb-go.tar.gz
           fi
+
+          # 清理临时文件
+          rm -f *.list cidr-merger apnic.txt
 
       - name: Push to GitHub
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Auto-update: $(date)" || exit 0
+          # 如果没有变化则不提交
+          git diff-index --quiet HEAD || git commit -m "Update IP lists: $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
           git push
