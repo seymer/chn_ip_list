@@ -228,11 +228,11 @@ jobs:
             echo "# China public IPv4 only (no private/LAN/loopback)"
             echo "# Total IPv4 entries: $(wc -l < ipv4.txt)"
             echo ""
-            echo "/ip firewall address-list remove [find list=CN]"
+            echo "/ip firewall address-list remove [find list=chnroute]"
             echo ""
             echo "/ip firewall address-list"
             if [ -s ipv4.txt ]; then
-              awk '{print "add list=CN address=" $1}' ipv4.txt
+              awk '{print "add list=chnroute address=" $1}' ipv4.txt
             fi
           } > ipv4.rsc
           
@@ -244,17 +244,17 @@ jobs:
             echo "# China public IP only (IPv4 + IPv6, no private/LAN/loopback)"
             echo "# Total IPv4: $(wc -l < ipv4.txt), IPv6: $(wc -l < ipv6.txt)"
             echo ""
-            echo "/ip firewall address-list remove [find list=CN]"
-            echo "/ipv6 firewall address-list remove [find list=CN]"
+            echo "/ip firewall address-list remove [find list=chnroute]"
+            echo "/ipv6 firewall address-list remove [find list=chnroute]"
             echo ""
             echo "/ip firewall address-list"
             if [ -s ipv4.txt ]; then
-              awk '{print "add list=CN address=" $1}' ipv4.txt
+              awk '{print "add list=chnroute address=" $1}' ipv4.txt
             fi
             echo ""
             echo "/ipv6 firewall address-list"
             if [ -s ipv6.txt ]; then
-              awk '{print "add list=CN address=" $1}' ipv6.txt
+              awk '{print "add list=chnroute address=" $1}' ipv6.txt
             fi
           } > ip.rsc
           
