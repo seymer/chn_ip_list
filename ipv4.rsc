@@ -1,4 +1,4 @@
-# Generated at 2026-02-05 14:35:40 UTC
+# Generated at 2026-02-05 20:35:24 UTC
 # China public IPv4 only (no private/LAN/loopback)
 # Total IPv4 entries: 5827
 
