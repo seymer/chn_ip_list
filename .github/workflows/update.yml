@@ -217,25 +217,20 @@ jobs:
           log_info "Generated ip.json ($(wc -c < ip.json) bytes)"
           
           # ============================================
-          # 5. 生成 RouterOS RSC 脚本
+          # 5. 生成 RouterOS RSC 脚本（仅中国公网 IP，不含私有/环回，私有地址请手动配置）
           # ============================================
           
           log_info "Step 5: Generating RouterOS RSC scripts"
           
-          # 生成仅 IPv4 的 RSC 文件
+          # 仅中国公网 IPv4
           {
             echo "# Generated at $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
-            echo "# IPv4-only RouterOS script for chnroute list"
+            echo "# China public IPv4 only (no private/LAN/loopback)"
             echo "# Total IPv4 entries: $(wc -l < ipv4.txt)"
             echo ""
             echo "/ip firewall address-list remove [find list=chnroute]"
             echo ""
             echo "/ip firewall address-list"
-            echo "add list=chnroute address=10.0.0.0/8 comment=Private-LAN"
-            echo "add list=chnroute address=172.16.0.0/12 comment=Private-LAN"
-            echo "add list=chnroute address=192.168.0.0/16 comment=Private-LAN"
-            echo "add list=chnroute address=127.0.0.0/8 comment=Loopback"
-            
             if [ -s ipv4.txt ]; then
               awk '{print "add list=chnroute address=" $1}' ipv4.txt
             fi
@@ -243,31 +238,21 @@ jobs:
           
           log_info "Generated ipv4.rsc ($(wc -l < ipv4.rsc) lines)"
           
-          # 生成包含 IPv4 和 IPv6 的完整 RSC 文件
+          # 中国公网 IPv4 + IPv6（不含私有/环回）
           {
             echo "# Generated at $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
-            echo "# Full RouterOS script (IPv4 + IPv6) for chnroute list"
+            echo "# China public IP only (IPv4 + IPv6, no private/LAN/loopback)"
             echo "# Total IPv4: $(wc -l < ipv4.txt), IPv6: $(wc -l < ipv6.txt)"
             echo ""
             echo "/ip firewall address-list remove [find list=chnroute]"
             echo "/ipv6 firewall address-list remove [find list=chnroute]"
             echo ""
             echo "/ip firewall address-list"
-            echo "add list=chnroute address=10.0.0.0/8 comment=Private-LAN"
-            echo "add list=chnroute address=172.16.0.0/12 comment=Private-LAN"
-            echo "add list=chnroute address=192.168.0.0/16 comment=Private-LAN"
-            echo "add list=chnroute address=127.0.0.0/8 comment=Loopback"
-            
             if [ -s ipv4.txt ]; then
               awk '{print "add list=chnroute address=" $1}' ipv4.txt
             fi
-            
             echo ""
             echo "/ipv6 firewall address-list"
-            echo "add list=chnroute address=::1/128 comment=Loopback"
-            echo "add list=chnroute address=fe80::/10 comment=Link-Local"
-            echo "add list=chnroute address=fc00::/7 comment=Unique-Local"
-            
             if [ -s ipv6.txt ]; then
               awk '{print "add list=chnroute address=" $1}' ipv6.txt
             fi

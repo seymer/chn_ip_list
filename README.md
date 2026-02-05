@@ -10,3 +10,7 @@ Source data from [BGP/ASN](https://github.com/gaoyifan/china-operator-ip/tree/ip
 GitLab CI/CD checks for updates **ONCE A DAY**.  
 Thanks to [zhanhb/cidr-merger](https://github.com/zhanhb/cidr-merger) and [carrnot/mmdb-go](https://github.com/carrnot/mmdb-go) for those useful tools.  
 Both [GitLab](https://gitlab.com/fernvenue/chn-cidr-list) and [GitHub](https://github.com/fernvenue/chn-cidr-list) mirror each other, PRs are welcome on either side.
+
+### RouterOS (RSC)
+
+- **中国公网 IP**（不含私有/环回）：`ipv4.rsc`（仅 IPv4）、`ip.rsc`（IPv4+IPv6），地址列表名 `chnroute`。局域网/私有地址请自行在 RouterOS 中配置。
