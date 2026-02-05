@@ -1,6 +1,6 @@
 # IP Lists Update Summary
 
-**Generated at:** 2026-02-05 04:22:16 UTC
+**Generated at:** 2026-02-05 14:35:41 UTC
 
 ## Statistics
 
@@ -17,8 +17,8 @@
 - `ipv4.txt` (5827 lines, 88.4 KB)
 - `ipv6.txt` (2468 lines, 38.3 KB)
 - `ip.json` (8304 lines, 215.9 KB)
-- `ip.rsc` (8305 lines, 289.0 KB)
-- `ipv4.rsc` (5834 lines, 202.4 KB)
+- `ip.rsc` (8305 lines, 337.6 KB)
+- `ipv4.rsc` (5834 lines, 236.6 KB)
 - `ip.conf` (8295 lines, 191.5 KB)
 - `ipv4.conf` (5827 lines, 133.9 KB)
 - `ipv6.conf` (2468 lines, 57.5 KB)
