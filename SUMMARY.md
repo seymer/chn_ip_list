@@ -1,30 +1,30 @@
 # IP Lists Update Summary
 
-**Generated at:** 2026-03-28 20:20:23 UTC
+**Generated at:** 2026-04-04 20:20:38 UTC
 
 ## Statistics
 
 | Type | Count | Size |
 |------|-------|------|
-| IPv4 | 5703 | 88604 bytes |
-| IPv6 | 2452 | 38854 bytes |
-| Total | 8155 | 127458 bytes |
+| IPv4 | 5640 | 87620 bytes |
+| IPv6 | 2194 | 33889 bytes |
+| Total | 7834 | 121509 bytes |
 
 ## Generated Files
 
 - `LICENSE.txt` (30 lines, 1.5 KB)
-- `ip.txt` (8155 lines, 124.5 KB)
-- `ipv4.txt` (5703 lines, 86.5 KB)
-- `ipv6.txt` (2452 lines, 37.9 KB)
-- `ip.json` (8164 lines, 212.1 KB)
-- `ip.rsc` (8165 lines, 331.8 KB)
-- `ipv4.rsc` (5710 lines, 231.5 KB)
-- `ip.conf` (8155 lines, 188.2 KB)
-- `ipv4.conf` (5703 lines, 131.1 KB)
-- `ipv6.conf` (2452 lines, 57.1 KB)
-- `ip.yaml` (8157 lines, 172.3 KB)
-- `ipv4.yaml` (5705 lines, 120.0 KB)
-- `ipv6.yaml` (2454 lines, 52.4 KB)
-- `ip.mmdb` (410 lines, 230.1 KB)
-- `ipv4.mmdb` (330 lines, 111.0 KB)
-- `ipv6.mmdb` (336 lines, 120.3 KB)
+- `ip.txt` (7834 lines, 118.7 KB)
+- `ipv4.txt` (5640 lines, 85.6 KB)
+- `ipv6.txt` (2194 lines, 33.1 KB)
+- `ip.json` (7843 lines, 202.9 KB)
+- `ip.rsc` (7844 lines, 317.9 KB)
+- `ipv4.rsc` (5647 lines, 229.0 KB)
+- `ip.conf` (7834 lines, 179.9 KB)
+- `ipv4.conf` (5640 lines, 129.6 KB)
+- `ipv6.conf` (2194 lines, 50.2 KB)
+- `ip.yaml` (7836 lines, 164.6 KB)
+- `ipv4.yaml` (5642 lines, 118.7 KB)
+- `ipv6.yaml` (2196 lines, 46.0 KB)
+- `ip.mmdb` (402 lines, 218.0 KB)
+- `ipv4.mmdb` (328 lines, 108.0 KB)
+- `ipv6.mmdb` (330 lines, 111.1 KB)
