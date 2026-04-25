@@ -1,4 +1,4 @@
-# Generated at 2026-04-18 20:27:17 UTC
+# Generated at 2026-04-25 20:29:55 UTC
 # China public IPv4 only (no private/LAN/loopback)
 # Total IPv4 entries: 5642
 
@@ -2205,7 +2205,6 @@ add list=chnroute address=103.152.120.0/22
 add list=chnroute address=103.152.152.0/23
 add list=chnroute address=103.152.168.0/22
 add list=chnroute address=103.152.186.0/23
-add list=chnroute address=103.152.190.0/23
 add list=chnroute address=103.152.192.0/23
 add list=chnroute address=103.152.200.0/23
 add list=chnroute address=103.152.208.0/23
@@ -3870,6 +3869,7 @@ add list=chnroute address=163.125.0.0/16
 add list=chnroute address=163.128.30.0/23
 add list=chnroute address=163.128.152.0/23
 add list=chnroute address=163.128.236.0/23
+add list=chnroute address=163.128.254.0/23
 add list=chnroute address=163.142.0.0/16
 add list=chnroute address=163.177.0.0/16
 add list=chnroute address=163.179.0.0/16
