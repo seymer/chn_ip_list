@@ -1,6 +1,6 @@
-# Generated at 2026-08-15 20:12:08 UTC
+# Generated at 2026-08-22 20:12:50 UTC
 # China public IP only (IPv4 + IPv6, no private/LAN/loopback)
-# Total IPv4: 5625, IPv6: 2093
+# Total IPv4: 5627, IPv6: 2095
 
 /ip firewall address-list remove [find list=chnroute]
 /ipv6 firewall address-list remove [find list=chnroute]
@@ -72,8 +72,8 @@ add list=chnroute address=8.148.43.0/24
 add list=chnroute address=8.148.64.0/18
 add list=chnroute address=8.148.128.0/17
 add list=chnroute address=8.149.0.0/16
-add list=chnroute address=8.150.0.0/20
-add list=chnroute address=8.150.16.0/21
+add list=chnroute address=8.150.0.0/19
+add list=chnroute address=8.150.32.0/21
 add list=chnroute address=8.150.64.0/23
 add list=chnroute address=8.152.0.0/13
 add list=chnroute address=8.160.0.0/15
@@ -3837,6 +3837,7 @@ add list=chnroute address=162.14.0.0/16
 add list=chnroute address=162.105.0.0/16
 add list=chnroute address=163.0.0.0/16
 add list=chnroute address=163.47.4.0/22
+add list=chnroute address=163.52.28.0/23
 add list=chnroute address=163.53.0.0/20
 add list=chnroute address=163.53.36.0/22
 add list=chnroute address=163.53.40.0/21
@@ -3865,6 +3866,7 @@ add list=chnroute address=163.179.0.0/16
 add list=chnroute address=163.204.0.0/16
 add list=chnroute address=163.223.28.0/23
 add list=chnroute address=163.223.32.0/23
+add list=chnroute address=163.223.72.0/23
 add list=chnroute address=163.223.124.0/23
 add list=chnroute address=163.223.173.0/24
 add list=chnroute address=163.223.178.0/23
@@ -6429,7 +6431,9 @@ add list=chnroute address=2402:6e80::/32
 add list=chnroute address=2402:6f40::/32
 add list=chnroute address=2402:6fc0::/32
 add list=chnroute address=2402:7040::/32
+add list=chnroute address=2402:7060::/32
 add list=chnroute address=2402:7080::/32
+add list=chnroute address=2402:70a0::/29
 add list=chnroute address=2402:70c0::/32
 add list=chnroute address=2402:7140::/32
 add list=chnroute address=2402:71c0::/32
