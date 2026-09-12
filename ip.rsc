@@ -1,6 +1,6 @@
-# Generated at 2026-09-05 21:48:39 UTC
+# Generated at 2026-09-12 21:50:44 UTC
 # China public IP only (IPv4 + IPv6, no private/LAN/loopback)
-# Total IPv4: 5638, IPv6: 2248
+# Total IPv4: 5638, IPv6: 2252
 
 /ip firewall address-list remove [find list=chnroute]
 /ipv6 firewall address-list remove [find list=chnroute]
@@ -5649,6 +5649,12 @@ add list=chnroute address=223.255.252.0/23
 add list=chnroute address=2001:250::/30
 add list=chnroute address=2001:254::/31
 add list=chnroute address=2001:256::/32
+add list=chnroute address=2001:678:12b8::/48
+add list=chnroute address=2001:678:12c4::/48
+add list=chnroute address=2001:678:12cc::/48
+add list=chnroute address=2001:67c:a1c::/48
+add list=chnroute address=2001:67c:ebc::/48
+add list=chnroute address=2001:67c:2c1c::/48
 add list=chnroute address=2001:7fa:5::/48
 add list=chnroute address=2001:7fa:10::/48
 add list=chnroute address=2001:c68::/32
@@ -7891,6 +7897,4 @@ add list=chnroute address=2c0f:f7a8:805f::/48
 add list=chnroute address=2c0f:f7a8:8150::/48
 add list=chnroute address=2c0f:f7a8:815f::/48
 add list=chnroute address=2c0f:f7a8:8211::/48
-add list=chnroute address=2c0f:f7a8:9020::/48
 add list=chnroute address=2c0f:f7a8:9041::/48
-add list=chnroute address=2c0f:f7a8:9220::/48
