@@ -1,6 +1,6 @@
-# Generated at 2026-09-19 21:57:37 UTC
+# Generated at 2026-09-26 22:16:05 UTC
 # China public IP only (IPv4 + IPv6, no private/LAN/loopback)
-# Total IPv4: 5639, IPv6: 2247
+# Total IPv4: 5636, IPv6: 2247
 
 /ip firewall address-list remove [find list=chnroute]
 /ipv6 firewall address-list remove [find list=chnroute]
@@ -919,7 +919,6 @@ add list=chnroute address=71.131.192.0/18
 add list=chnroute address=71.132.0.0/18
 add list=chnroute address=71.136.64.0/18
 add list=chnroute address=71.137.0.0/18
-add list=chnroute address=74.122.26.0/23
 add list=chnroute address=81.68.0.0/14
 add list=chnroute address=81.173.18.0/23
 add list=chnroute address=81.173.20.0/22
@@ -1953,7 +1952,6 @@ add list=chnroute address=103.115.120.0/22
 add list=chnroute address=103.115.148.0/22
 add list=chnroute address=103.115.248.0/22
 add list=chnroute address=103.116.40.0/22
-add list=chnroute address=103.116.64.0/22
 add list=chnroute address=103.116.76.0/22
 add list=chnroute address=103.116.92.0/22
 add list=chnroute address=103.116.120.0/22
@@ -3196,7 +3194,6 @@ add list=chnroute address=117.128.0.0/14
 add list=chnroute address=117.132.0.0/15
 add list=chnroute address=117.134.0.0/17
 add list=chnroute address=117.134.128.0/18
-add list=chnroute address=117.134.205.0/24
 add list=chnroute address=117.134.207.0/24
 add list=chnroute address=117.134.208.0/23
 add list=chnroute address=117.134.212.0/23
@@ -3842,6 +3839,7 @@ add list=chnroute address=163.47.4.0/22
 add list=chnroute address=163.52.28.0/23
 add list=chnroute address=163.52.76.0/23
 add list=chnroute address=163.52.108.0/23
+add list=chnroute address=163.52.246.0/23
 add list=chnroute address=163.53.0.0/20
 add list=chnroute address=163.53.36.0/22
 add list=chnroute address=163.53.40.0/21
@@ -4040,7 +4038,6 @@ add list=chnroute address=183.182.0.0/19
 add list=chnroute address=183.184.0.0/13
 add list=chnroute address=183.192.0.0/10
 add list=chnroute address=185.2.48.0/24
-add list=chnroute address=185.2.51.0/24
 add list=chnroute address=185.75.173.0/24
 add list=chnroute address=185.75.174.0/24
 add list=chnroute address=185.192.56.0/22
@@ -6454,6 +6451,7 @@ add list=chnroute address=2402:73e0::/32
 add list=chnroute address=2402:7540::/32
 add list=chnroute address=2402:75c0::/32
 add list=chnroute address=2402:7740::/32
+add list=chnroute address=2402:7820::/32
 add list=chnroute address=2402:7d00::/32
 add list=chnroute address=2402:7d80::/32
 add list=chnroute address=2402:8180::/32
@@ -6679,7 +6677,6 @@ add list=chnroute address=2403:4c80::/32
 add list=chnroute address=2403:4cc0::/32
 add list=chnroute address=2403:4d80::/32
 add list=chnroute address=2403:4ec0::/32
-add list=chnroute address=2403:5040::/32
 add list=chnroute address=2403:5080::/32
 add list=chnroute address=2403:5280::/32
 add list=chnroute address=2403:5380::/32
