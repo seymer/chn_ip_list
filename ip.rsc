@@ -1,6 +1,6 @@
-# Generated at 2026-09-26 22:16:05 UTC
+# Generated at 2026-10-03 22:33:33 UTC
 # China public IP only (IPv4 + IPv6, no private/LAN/loopback)
-# Total IPv4: 5636, IPv6: 2247
+# Total IPv4: 5637, IPv6: 2282
 
 /ip firewall address-list remove [find list=chnroute]
 /ipv6 firewall address-list remove [find list=chnroute]
@@ -400,6 +400,7 @@ add list=chnroute address=43.241.16.0/21
 add list=chnroute address=43.241.48.0/22
 add list=chnroute address=43.241.76.0/22
 add list=chnroute address=43.241.80.0/20
+add list=chnroute address=43.241.100.0/23
 add list=chnroute address=43.241.112.0/22
 add list=chnroute address=43.241.168.0/21
 add list=chnroute address=43.241.176.0/21
@@ -902,6 +903,7 @@ add list=chnroute address=61.240.0.0/14
 add list=chnroute address=62.234.0.0/16
 add list=chnroute address=63.140.0.0/24
 add list=chnroute address=63.140.3.0/24
+add list=chnroute address=65.111.16.0/22
 add list=chnroute address=66.102.240.0/21
 add list=chnroute address=66.102.248.0/23
 add list=chnroute address=66.102.251.0/24
@@ -3194,7 +3196,6 @@ add list=chnroute address=117.128.0.0/14
 add list=chnroute address=117.132.0.0/15
 add list=chnroute address=117.134.0.0/17
 add list=chnroute address=117.134.128.0/18
-add list=chnroute address=117.134.207.0/24
 add list=chnroute address=117.134.208.0/23
 add list=chnroute address=117.134.212.0/23
 add list=chnroute address=117.134.216.0/22
@@ -7704,7 +7705,36 @@ add list=chnroute address=2605:9d80:9092::/48
 add list=chnroute address=2620:57:4004::/47
 add list=chnroute address=2804:1e48:9002::/48
 add list=chnroute address=2a03:f900::/29
+add list=chnroute address=2a04:3e00::/48
+add list=chnroute address=2a04:3e00:2::/47
+add list=chnroute address=2a04:3e00:4::/46
+add list=chnroute address=2a04:3e00:8::/45
+add list=chnroute address=2a04:3e00:10::/44
+add list=chnroute address=2a04:3e00:20::/43
+add list=chnroute address=2a04:3e00:40::/42
+add list=chnroute address=2a04:3e00:80::/41
+add list=chnroute address=2a04:3e00:100::/40
+add list=chnroute address=2a04:3e00:200::/39
+add list=chnroute address=2a04:3e00:400::/38
+add list=chnroute address=2a04:3e00:800::/37
+add list=chnroute address=2a04:3e00:1001::/48
 add list=chnroute address=2a04:3e00:1002::/48
+add list=chnroute address=2a04:3e00:1004::/46
+add list=chnroute address=2a04:3e00:1008::/45
+add list=chnroute address=2a04:3e00:1010::/44
+add list=chnroute address=2a04:3e00:1020::/43
+add list=chnroute address=2a04:3e00:1040::/42
+add list=chnroute address=2a04:3e00:1080::/41
+add list=chnroute address=2a04:3e00:1100::/40
+add list=chnroute address=2a04:3e00:1200::/39
+add list=chnroute address=2a04:3e00:1400::/38
+add list=chnroute address=2a04:3e00:1800::/37
+add list=chnroute address=2a04:3e00:2000::/35
+add list=chnroute address=2a04:3e00:4000::/34
+add list=chnroute address=2a04:3e00:8000::/33
+add list=chnroute address=2a04:3e01::/32
+add list=chnroute address=2a04:3e02::/31
+add list=chnroute address=2a04:3e04::/30
 add list=chnroute address=2a04:f580:8010::/47
 add list=chnroute address=2a04:f580:8090::/48
 add list=chnroute address=2a04:f580:8210::/47
@@ -7766,7 +7796,9 @@ add list=chnroute address=2a0a:d681:e100::/40
 add list=chnroute address=2a0a:d681:e200::/39
 add list=chnroute address=2a0a:d681:e400::/38
 add list=chnroute address=2a0a:d681:e800::/37
-add list=chnroute address=2a0a:d681:f000::/36
+add list=chnroute address=2a0a:d681:f000::/37
+add list=chnroute address=2a0a:d681:f800::/38
+add list=chnroute address=2a0a:d681:fe00::/40
 add list=chnroute address=2a0a:d682::/33
 add list=chnroute address=2a0a:d682:8000::/34
 add list=chnroute address=2a0a:d682:c000::/36
@@ -7775,7 +7807,11 @@ add list=chnroute address=2a0a:d684::/32
 add list=chnroute address=2a0a:d685::/40
 add list=chnroute address=2a0a:d685:100::/41
 add list=chnroute address=2a0a:d685:180::/42
-add list=chnroute address=2a0a:d685:1c0::/43
+add list=chnroute address=2a0a:d685:1c0::/44
+add list=chnroute address=2a0a:d685:1d1::/48
+add list=chnroute address=2a0a:d685:1d2::/47
+add list=chnroute address=2a0a:d685:1d4::/46
+add list=chnroute address=2a0a:d685:1d8::/45
 add list=chnroute address=2a0a:d685:1e2::/47
 add list=chnroute address=2a0a:d685:1e4::/46
 add list=chnroute address=2a0a:d685:1e8::/45

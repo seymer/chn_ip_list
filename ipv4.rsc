@@ -1,6 +1,6 @@
-# Generated at 2026-09-26 22:16:05 UTC
+# Generated at 2026-10-03 22:33:33 UTC
 # China public IPv4 only (no private/LAN/loopback)
-# Total IPv4 entries: 5636
+# Total IPv4 entries: 5637
 
 /ip firewall address-list remove [find list=chnroute]
 
@@ -399,6 +399,7 @@ add list=chnroute address=43.241.16.0/21
 add list=chnroute address=43.241.48.0/22
 add list=chnroute address=43.241.76.0/22
 add list=chnroute address=43.241.80.0/20
+add list=chnroute address=43.241.100.0/23
 add list=chnroute address=43.241.112.0/22
 add list=chnroute address=43.241.168.0/21
 add list=chnroute address=43.241.176.0/21
@@ -901,6 +902,7 @@ add list=chnroute address=61.240.0.0/14
 add list=chnroute address=62.234.0.0/16
 add list=chnroute address=63.140.0.0/24
 add list=chnroute address=63.140.3.0/24
+add list=chnroute address=65.111.16.0/22
 add list=chnroute address=66.102.240.0/21
 add list=chnroute address=66.102.248.0/23
 add list=chnroute address=66.102.251.0/24
@@ -3193,7 +3195,6 @@ add list=chnroute address=117.128.0.0/14
 add list=chnroute address=117.132.0.0/15
 add list=chnroute address=117.134.0.0/17
 add list=chnroute address=117.134.128.0/18
-add list=chnroute address=117.134.207.0/24
 add list=chnroute address=117.134.208.0/23
 add list=chnroute address=117.134.212.0/23
 add list=chnroute address=117.134.216.0/22
